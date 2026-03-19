@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "scene-1",
+      "description": "A close-up of a wooden craft on a minimalist desk",
+      "imageUrl": "https://picsum.photos/seed/story1/1200/800",
+      "imageHint": "wooden craft desk"
+    },
+    {
+      "id": "scene-2",
+      "description": "An open window with a soft breeze blowing a curtain",
+      "imageUrl": "https://picsum.photos/seed/story2/1200/800",
+      "imageHint": "window curtain breeze"
+    },
+    {
+      "id": "scene-3",
+      "description": "Hands carefully planting a small sprout in a ceramic pot",
+      "imageUrl": "https://picsum.photos/seed/story3/1200/800",
+      "imageHint": "planting sprout hands"
+    },
+    {
+      "id": "scene-4",
+      "description": "A simple cup of steaming coffee on a rustic stone ledge",
+      "imageUrl": "https://picsum.photos/seed/story4/1200/800",
+      "imageHint": "coffee stone ledge"
+    },
+    {
+      "id": "scene-5",
+      "description": "Sunlight filtering through forest trees onto a path",
+      "imageUrl": "https://picsum.photos/seed/story5/1200/800",
+      "imageHint": "sunlight forest path"
+    }
+  ]
+}
