@@ -8,18 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon, Info } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon, Info, Loader2, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 interface StoryEditorProps {
   initialSegments: StorySegment[];
-  onSave: (segments: StorySegment[]) => void;
+  onSave: (segments: StorySegment[]) => Promise<void>;
 }
 
 export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
   const [segments, setSegments] = useState<StorySegment[]>(initialSegments);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const addSegment = () => {
     const newSegment: StorySegment = {
@@ -52,6 +53,15 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
     }
   };
 
+  const handleSaveClick = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(segments);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
       <header className="flex items-center justify-between mb-8">
@@ -64,18 +74,21 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
           <h1 className="text-3xl font-headline font-bold text-primary">Narrative Editor</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={addSegment}>
+          <Button variant="outline" onClick={addSegment} disabled={isSaving}>
             <Plus className="w-4 h-4 mr-2" /> Add Segment
           </Button>
-          <Button onClick={() => onSave(segments)}>Save Changes</Button>
+          <Button onClick={handleSaveClick} disabled={isSaving}>
+            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       </header>
 
       <Alert className="mb-10 bg-primary/5 border-primary/20">
         <Info className="h-4 w-4" />
-        <AlertTitle>Pro Tip: Scroll Synchronization</AlertTitle>
+        <AlertTitle>Pro Tip: Stop-Motion Effect</AlertTitle>
         <AlertDescription>
-          To create a "Stop-Motion" effect, use a direct link to a video file (ending in .mp4 or .webm). YouTube links are not supported for scroll synchronization.
+          To create a "Stop-Motion" scrubbing effect, use a <strong>direct link to an MP4 file</strong>. Standard YouTube links do not support frame-by-frame scroll synchronization.
         </AlertDescription>
       </Alert>
 
@@ -141,7 +154,7 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                       value={segment.videoUrl || ''} 
                       onChange={(e) => updateSegment(segment.id, { videoUrl: e.target.value })}
                     />
-                    <p className="text-[10px] text-muted-foreground italic">Required for stop-motion scroll sync. YouTube/Vimeo not supported.</p>
+                    <p className="text-[10px] text-muted-foreground italic">Required for stop-motion scroll sync. YouTube/Vimeo links will not sync with scroll.</p>
                   </div>
                 </div>
                 

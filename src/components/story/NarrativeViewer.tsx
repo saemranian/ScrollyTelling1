@@ -20,40 +20,51 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || segments.length === 0) return;
       
       const scrollY = window.scrollY;
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const windowHeight = window.innerHeight;
+      const totalHeight = document.documentElement.scrollHeight - windowHeight;
       const scrollPercent = Math.min(Math.max(scrollY / totalHeight, 0), 1);
       
       setProgress(scrollPercent);
       
-      // Calculate which segment we are in
+      // Determine current segment index
       const index = Math.min(
         Math.floor(scrollPercent * segments.length),
         segments.length - 1
       );
       setCurrentIndex(index);
 
-      // Stop-motion sync logic:
-      // Calculate progress WITHIN the current segment (0 to 1)
-      const segmentHeight = totalHeight / segments.length;
-      const segmentScrollTop = index * segmentHeight;
-      const localProgress = (scrollY - segmentScrollTop) / segmentHeight;
-      const normalizedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
+      // Stop-motion scrubbing logic
+      // Calculate how far we are into the CURRENT segment (0 to 1)
+      const segmentPortion = 1 / segments.length;
+      const segmentStartPercent = index * segmentPortion;
+      const localProgress = (scrollPercent - segmentStartPercent) / segmentPortion;
+      const clampedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
 
-      // Update video currentTime based on scroll
+      // Scrub the video for the active segment
       const activeSegment = segments[index];
       const video = videoRefs.current[activeSegment.id];
-      if (video && video.duration) {
-        // We multiply duration by local progress to "scrub" the video
-        video.currentTime = video.duration * normalizedLocalProgress;
+      if (video && video.duration && !isNaN(video.duration)) {
+        video.currentTime = video.duration * clampedLocalProgress;
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial call to set state
+    handleScroll();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, [segments]);
+
+  if (segments.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">No narrative segments found. Go to Editor to add some.</p>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -87,8 +98,8 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
             )}
           </div>
         ))}
-        {/* Vignette Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/40" />
+        {/* Cinematic Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/60" />
       </div>
 
       <ProgressBar 
@@ -120,7 +131,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
       </div>
 
       {/* Scroll Hint */}
-      {progress < 0.05 && (
+      {progress < 0.02 && (
         <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-60">
           <span className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Scroll to Begin</span>
           <ChevronDown className="w-5 h-5 text-muted-foreground" />

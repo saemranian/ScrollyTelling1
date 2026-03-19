@@ -3,7 +3,6 @@ import { db } from "@/lib/firebase";
 import { 
   collection, 
   getDocs, 
-  setDoc, 
   doc, 
   query, 
   orderBy, 
@@ -14,31 +13,46 @@ import { StorySegment } from "@/components/story/StoryTypes";
 
 const COLLECTION_NAME = "story_segments";
 
+/**
+ * Fetches all story segments from Firestore, ordered by their sequence.
+ */
 export async function getStorySegments(): Promise<StorySegment[]> {
-  const q = query(collection(db, COLLECTION_NAME), orderBy("order", "asc"));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as StorySegment));
+  try {
+    const q = query(collection(db, COLLECTION_NAME), orderBy("order", "asc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as StorySegment));
+  } catch (error) {
+    console.error("Error fetching story segments:", error);
+    return [];
+  }
 }
 
+/**
+ * Persists the entire list of story segments to Firestore.
+ * For this prototype, it replaces the collection to ensure order and deletions are synced.
+ */
 export async function saveStorySegments(segments: StorySegment[]): Promise<void> {
   const batch = writeBatch(db);
   
-  // First, clear existing segments to handle deletions easily in this prototype
-  // In a production app, you'd sync changes more granularly
-  const currentSegments = await getStorySegments();
-  for (const segment of currentSegments) {
-    batch.delete(doc(db, COLLECTION_NAME, segment.id));
-  }
+  // 1. Get current segments to delete them (simplifies sync for prototype)
+  const currentSegmentsSnapshot = await getDocs(collection(db, COLLECTION_NAME));
+  currentSegmentsSnapshot.forEach((document) => {
+    batch.delete(doc(db, COLLECTION_NAME, document.id));
+  });
 
-  // Add new/updated segments
+  // 2. Add the new/updated segments with updated order
   segments.forEach((segment, index) => {
-    const segmentRef = doc(db, COLLECTION_NAME, segment.id);
+    // Generate a clean ID if it doesn't exist, otherwise use existing
+    const segmentId = segment.id || doc(collection(db, COLLECTION_NAME)).id;
+    const segmentRef = doc(db, COLLECTION_NAME, segmentId);
+    
     batch.set(segmentRef, {
       ...segment,
-      order: index // Ensure order matches current list position
+      id: segmentId,
+      order: index
     });
   });
 
