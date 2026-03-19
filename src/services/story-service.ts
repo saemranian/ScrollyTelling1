@@ -5,18 +5,22 @@ import {
   query, 
   orderBy, 
   writeBatch,
-  Firestore
+  Firestore,
+  serverTimestamp
 } from "firebase/firestore";
 import { StorySegment } from "@/components/story/StoryTypes";
 
-const COLLECTION_NAME = "story_segments";
+// Using path from backend.json: /published_stories/{storyId}/segments/{segmentId}
+const STORY_ID = "default-interactive-story";
+const PUBLISHED_COLLECTION = "published_stories";
 
 /**
- * Fetches all story segments from Firestore, ordered by their sequence.
+ * Fetches all story segments from the default published story.
  */
 export async function getStorySegments(db: Firestore): Promise<StorySegment[]> {
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy("order", "asc"));
+    const segmentsRef = collection(db, PUBLISHED_COLLECTION, STORY_ID, "segments");
+    const q = query(segmentsRef, orderBy("order", "asc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -29,28 +33,41 @@ export async function getStorySegments(db: Firestore): Promise<StorySegment[]> {
 }
 
 /**
- * Persists the entire list of story segments to Firestore.
+ * Persists story segments. In a real app, this would handle both drafts and published stories.
+ * For this prototype, we save directly to a public story.
  */
-export async function saveStorySegments(db: Firestore, segments: StorySegment[]): Promise<void> {
+export async function saveStorySegments(db: Firestore, userId: string, segments: StorySegment[]): Promise<void> {
   const batch = writeBatch(db);
-  
-  // 1. Get current segments to clear them (simplifies sync for prototype)
-  const currentSegmentsSnapshot = await getDocs(collection(db, COLLECTION_NAME));
+  const storyRef = doc(db, PUBLISHED_COLLECTION, STORY_ID);
+  const segmentsRef = collection(db, PUBLISHED_COLLECTION, STORY_ID, "segments");
+
+  // 1. Ensure the parent story document exists
+  batch.set(storyRef, {
+    title: "The Main Narrative",
+    shortDescription: "An immersive scroll-driven journey.",
+    creatorId: userId,
+    isPublished: true,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  // 2. Clear existing segments (Prototype approach: simple sync)
+  const currentSegmentsSnapshot = await getDocs(segmentsRef);
   currentSegmentsSnapshot.forEach((document) => {
-    batch.delete(doc(db, COLLECTION_NAME, document.id));
+    batch.delete(doc(db, PUBLISHED_COLLECTION, STORY_ID, "segments", document.id));
   });
 
-  // 2. Add the new/updated segments
+  // 3. Add new segments
   segments.forEach((segment, index) => {
-    const segmentId = segment.id || doc(collection(db, COLLECTION_NAME)).id;
-    const segmentRef = doc(db, COLLECTION_NAME, segmentId);
+    const segmentId = segment.id && !segment.id.includes('.') ? segment.id : doc(segmentsRef).id;
+    const segmentDocRef = doc(db, PUBLISHED_COLLECTION, STORY_ID, "segments", segmentId);
     
-    // Create a data object without the id to avoid duplicate ID fields in the document data
     const { id, ...data } = segment;
     
-    batch.set(segmentRef, {
+    batch.set(segmentDocRef, {
       ...data,
       id: segmentId,
+      storyId: STORY_ID,
+      creatorId: userId,
       order: index
     });
   });

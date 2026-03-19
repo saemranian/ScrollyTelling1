@@ -7,16 +7,17 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { getStorySegments, saveStorySegments } from '@/services/story-service';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useAuth } from '@/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Database, Loader2 } from 'lucide-react';
+import { signInAnonymously } from 'firebase/auth';
 
 const initialDefaultSegments: StorySegment[] = [
   {
     id: '1',
     title: 'A New Beginning',
     description: 'The journey began in a small wooden workshop, where every tool held a story and every shaving of wood carried the scent of possibility.',
-    imageUrl: PlaceHolderImages.find(p => p.id === 'scene-1')?.imageUrl || '',
+    imageUrl: PlaceHolderImages.find(p => p.id === 'scene-1')?.imageUrl || 'https://picsum.photos/seed/story1/1200/800',
     order: 0,
   }
 ];
@@ -24,9 +25,17 @@ const initialDefaultSegments: StorySegment[] = [
 export default function EditorPage() {
   const { toast } = useToast();
   const db = useFirestore();
+  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const [segments, setSegments] = useState<StorySegment[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Ensure user is signed in anonymously to allow Firestore writes
+  useEffect(() => {
+    if (auth && !user && !isUserLoading) {
+      signInAnonymously(auth).catch(err => console.error("Anonymous auth failed", err));
+    }
+  }, [auth, user, isUserLoading]);
 
   useEffect(() => {
     async function loadData() {
@@ -45,17 +54,17 @@ export default function EditorPage() {
   }, [db]);
 
   const handleSave = async (newSegments: StorySegment[]) => {
-    if (!db) {
+    if (!db || !user) {
       toast({
-        title: "Database Error",
-        description: "Firestore instance not available.",
+        title: "Auth Error",
+        description: "You must be signed in to save. Please wait a moment and try again.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      await saveStorySegments(db, newSegments);
+      await saveStorySegments(db, user.uid, newSegments);
       setSegments(newSegments);
       toast({
         title: "Narrative Saved",

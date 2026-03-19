@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon, Info, Loader2, Save } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -57,6 +56,8 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
     setIsSaving(true);
     try {
       await onSave(segments);
+    } catch (err) {
+       console.error("Save error", err);
     } finally {
       setIsSaving(false);
     }
@@ -137,7 +138,7 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <ImageIcon className="w-3 h-3" /> Background Image URL
+                      <LucideImage className="w-3 h-3" /> Background Image URL
                     </label>
                     <Input 
                       placeholder="https://images.unsplash.com/..."
