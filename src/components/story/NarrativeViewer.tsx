@@ -16,6 +16,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,16 +28,32 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
       
       setProgress(scrollPercent);
       
+      // Calculate which segment we are in
       const index = Math.min(
         Math.floor(scrollPercent * segments.length),
         segments.length - 1
       );
       setCurrentIndex(index);
+
+      // Stop-motion sync logic:
+      // Calculate progress WITHIN the current segment (0 to 1)
+      const segmentHeight = totalHeight / segments.length;
+      const segmentScrollTop = index * segmentHeight;
+      const localProgress = (scrollY - segmentScrollTop) / segmentHeight;
+      const normalizedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
+
+      // Update video currentTime based on scroll
+      const activeSegment = segments[index];
+      const video = videoRefs.current[activeSegment.id];
+      if (video && video.duration) {
+        // We multiply duration by local progress to "scrub" the video
+        video.currentTime = video.duration * normalizedLocalProgress;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [segments.length]);
+  }, [segments]);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -46,17 +63,17 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
           <div
             key={segment.id}
             className={cn(
-              "absolute inset-0 transition-opacity duration-1000 ease-in-out",
+              "absolute inset-0 transition-opacity duration-700 ease-in-out",
               idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
             )}
           >
             {segment.videoUrl ? (
               <video
+                ref={(el) => { videoRefs.current[segment.id] = el; }}
                 src={segment.videoUrl}
-                autoPlay
                 muted
-                loop
                 playsInline
+                preload="auto"
                 className="w-full h-full object-cover brightness-[0.7] contrast-[0.9]"
               />
             ) : (

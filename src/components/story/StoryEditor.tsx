@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 interface StoryEditorProps {
@@ -53,7 +54,7 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
-      <header className="flex items-center justify-between mb-12">
+      <header className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Link href="/">
             <Button variant="outline" size="icon" className="rounded-full">
@@ -69,6 +70,14 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
           <Button onClick={() => onSave(segments)}>Save Changes</Button>
         </div>
       </header>
+
+      <Alert className="mb-10 bg-primary/5 border-primary/20">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Pro Tip: Scroll Synchronization</AlertTitle>
+        <AlertDescription>
+          To create a "Stop-Motion" effect, use a direct link to a video file (ending in .mp4 or .webm). YouTube links are not supported for scroll synchronization.
+        </AlertDescription>
+      </Alert>
 
       <div className="space-y-8">
         {segments.map((segment, index) => (
@@ -125,23 +134,24 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <Video className="w-3 h-3" /> Background Video URL (Optional)
+                      <Video className="w-3 h-3" /> Direct Video URL (MP4)
                     </label>
                     <Input 
                       placeholder="https://mysite.com/video.mp4"
                       value={segment.videoUrl || ''} 
                       onChange={(e) => updateSegment(segment.id, { videoUrl: e.target.value })}
                     />
-                    <p className="text-[10px] text-muted-foreground italic">Video will override the image if provided.</p>
+                    <p className="text-[10px] text-muted-foreground italic">Required for stop-motion scroll sync. YouTube/Vimeo not supported.</p>
                   </div>
                 </div>
                 
                 <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border-2 border-muted-foreground/10 group">
                    {segment.videoUrl ? (
                      <video 
+                       key={segment.videoUrl}
                        src={segment.videoUrl} 
                        className="object-cover w-full h-full"
-                       autoPlay muted loop
+                       muted
                      />
                    ) : (
                      <img 
