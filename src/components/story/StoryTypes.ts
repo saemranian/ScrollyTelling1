@@ -4,6 +4,7 @@ export interface StorySegment {
   title: string;
   description: string;
   imageUrl: string;
+  videoUrl?: string; // Optional URL for background video
   order: number;
 }
 

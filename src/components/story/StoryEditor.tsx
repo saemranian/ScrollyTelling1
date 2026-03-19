@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface StoryEditorProps {
@@ -60,37 +60,38 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-headline font-bold text-primary">Story Content Editor</h1>
+          <h1 className="text-3xl font-headline font-bold text-primary">Narrative Editor</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={addSegment}>
             <Plus className="w-4 h-4 mr-2" /> Add Segment
           </Button>
-          <Button onClick={() => onSave(segments)}>Save Narrative</Button>
+          <Button onClick={() => onSave(segments)}>Save Changes</Button>
         </div>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {segments.map((segment, index) => (
-          <Card key={segment.id} className="overflow-hidden border-muted">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/30">
-              <CardTitle className="text-lg">Segment #{index + 1}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => removeSegment(segment.id)} className="text-destructive">
+          <Card key={segment.id} className="overflow-hidden border-muted shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b">
+              <CardTitle className="text-lg font-bold text-primary/80">Segment #{index + 1}</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => removeSegment(segment.id)} className="text-destructive hover:bg-destructive/10">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Chapter Title</label>
                   <Input 
+                    placeholder="Enter segment title..."
                     value={segment.title} 
                     onChange={(e) => updateSegment(segment.id, { title: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Story Text</label>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -99,30 +100,59 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                       className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
                     >
                       <Sparkles className="w-3 h-3 mr-1" />
-                      {isGenerating === segment.id ? 'Refining...' : 'Refine with AI'}
+                      {isGenerating === segment.id ? 'Writing...' : 'AI Enhance'}
                     </Button>
                   </div>
                   <Textarea 
-                    rows={4}
+                    placeholder="Describe this part of the journey..."
+                    rows={5}
                     value={segment.description} 
                     onChange={(e) => updateSegment(segment.id, { description: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="space-y-4">
-                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stop-Motion Image URL</label>
-                  <Input 
-                    value={segment.imageUrl} 
-                    onChange={(e) => updateSegment(segment.id, { imageUrl: e.target.value })}
-                  />
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <ImageIcon className="w-3 h-3" /> Background Image URL
+                    </label>
+                    <Input 
+                      placeholder="https://images.unsplash.com/..."
+                      value={segment.imageUrl} 
+                      onChange={(e) => updateSegment(segment.id, { imageUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Video className="w-3 h-3" /> Background Video URL (Optional)
+                    </label>
+                    <Input 
+                      placeholder="https://mysite.com/video.mp4"
+                      value={segment.videoUrl || ''} 
+                      onChange={(e) => updateSegment(segment.id, { videoUrl: e.target.value })}
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Video will override the image if provided.</p>
+                  </div>
                 </div>
-                <div className="aspect-video relative rounded-md overflow-hidden bg-muted">
-                   <img 
-                    src={segment.imageUrl} 
-                    alt="Preview" 
-                    className="object-cover w-full h-full"
-                   />
+                
+                <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border-2 border-muted-foreground/10 group">
+                   {segment.videoUrl ? (
+                     <video 
+                       src={segment.videoUrl} 
+                       className="object-cover w-full h-full"
+                       autoPlay muted loop
+                     />
+                   ) : (
+                     <img 
+                       src={segment.imageUrl} 
+                       alt="Preview" 
+                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                     />
+                   )}
+                   <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white font-bold uppercase tracking-tighter">
+                     Preview
+                   </div>
                 </div>
               </div>
             </CardContent>
@@ -131,10 +161,10 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
       </div>
 
       {segments.length === 0 && (
-        <div className="text-center py-24 border-2 border-dashed border-muted rounded-xl">
-          <p className="text-muted-foreground mb-4">Your narrative is empty. Start by adding your first segment.</p>
-          <Button onClick={addSegment}>
-            <Plus className="w-4 h-4 mr-2" /> Create First Chapter
+        <div className="text-center py-24 border-2 border-dashed border-muted rounded-xl bg-muted/5">
+          <p className="text-muted-foreground mb-4 font-body">Your narrative is currently empty.</p>
+          <Button onClick={addSegment} className="rounded-full px-8">
+            <Plus className="w-4 h-4 mr-2" /> Start Your First Chapter
           </Button>
         </div>
       )}

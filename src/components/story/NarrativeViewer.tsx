@@ -38,11 +38,9 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [segments.length]);
 
-  const currentSegment = segments[currentIndex];
-
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Background Stop-Motion Layer */}
+      {/* Background Media Layer */}
       <div className="fixed inset-0 w-full h-full pointer-events-none z-0">
         {segments.map((segment, idx) => (
           <div
@@ -52,16 +50,27 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
               idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
             )}
           >
-            <Image
-              src={segment.imageUrl}
-              alt={segment.title}
-              fill
-              className="object-cover brightness-[0.85] contrast-[0.9]"
-              priority={idx === 0}
-            />
+            {segment.videoUrl ? (
+              <video
+                src={segment.videoUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover brightness-[0.7] contrast-[0.9]"
+              />
+            ) : (
+              <Image
+                src={segment.imageUrl}
+                alt={segment.title}
+                fill
+                className="object-cover brightness-[0.85] contrast-[0.9]"
+                priority={idx === 0}
+              />
+            )}
           </div>
         ))}
-        {/* Vignette/Minimalist Gradient Overlay */}
+        {/* Vignette Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/40" />
       </div>
 
@@ -93,7 +102,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
         ))}
       </div>
 
-      {/* Initial Scroll Hint */}
+      {/* Scroll Hint */}
       {progress < 0.05 && (
         <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-60">
           <span className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Scroll to Begin</span>
