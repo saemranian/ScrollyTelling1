@@ -4,7 +4,6 @@
 import React, { useState, useEffect } from 'react';
 import { NarrativeViewer } from '@/components/story/NarrativeViewer';
 import { StorySegment } from '@/components/story/StoryTypes';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
 import { Edit3, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,11 +12,20 @@ import { useFirestore } from '@/firebase';
 
 const defaultSegments: StorySegment[] = [
   {
-    id: '1',
-    title: 'A New Beginning',
-    description: 'The journey began in a small wooden workshop, where every tool held a story and every shaving of wood carried the scent of possibility.',
-    imageUrl: 'https://picsum.photos/seed/story1/1200/800',
+    id: 'intro',
+    title: 'The Great Journey',
+    description: 'Behold the beauty of nature as we traverse through the wild fields. Every movement captured in time, waiting for you to move the clock.',
+    imageUrl: 'https://picsum.photos/seed/bunny1/1200/800',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     order: 0,
+  },
+  {
+    id: 'climax',
+    title: 'Hidden Secrets',
+    description: 'The forest holds secrets only revealed to those who look closely. Scroll to see the world come alive around you.',
+    imageUrl: 'https://picsum.photos/seed/bunny2/1200/800',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    order: 1,
   }
 ];
 

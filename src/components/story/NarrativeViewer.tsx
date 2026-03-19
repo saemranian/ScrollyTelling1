@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { StorySegment } from './StoryTypes';
 import { ProgressBar } from './ProgressBar';
@@ -18,50 +18,54 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current || !segments || segments.length === 0) return;
-      
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const totalHeight = document.documentElement.scrollHeight - windowHeight;
-      
-      // Avoid division by zero if page is not scrollable
-      if (totalHeight <= 0) return;
+  const handleScroll = useCallback(() => {
+    if (!segments || segments.length === 0) return;
+    
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const totalHeight = document.documentElement.scrollHeight - windowHeight;
+    
+    if (totalHeight <= 0) return;
 
-      const scrollPercent = Math.min(Math.max(scrollY / totalHeight, 0), 1);
-      
-      setProgress(scrollPercent);
-      
-      // Determine current segment index safely
-      const index = Math.max(0, Math.min(
-        Math.floor(scrollPercent * segments.length),
-        segments.length - 1
-      ));
-      
-      setCurrentIndex(index);
+    const scrollPercent = Math.min(Math.max(scrollY / totalHeight, 0), 1);
+    setProgress(scrollPercent);
+    
+    // Determine current segment index
+    const segmentPortion = 1 / segments.length;
+    const index = Math.max(0, Math.min(
+      Math.floor(scrollPercent * segments.length),
+      segments.length - 1
+    ));
+    
+    setCurrentIndex(index);
 
-      // Stop-motion scrubbing logic
-      const activeSegment = segments[index];
-      if (!activeSegment) return;
-
-      const segmentPortion = 1 / segments.length;
+    // Stop-motion scrubbing logic
+    const activeSegment = segments[index];
+    if (activeSegment) {
       const segmentStartPercent = index * segmentPortion;
       const localProgress = (scrollPercent - segmentStartPercent) / segmentPortion;
       const clampedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
 
       const video = videoRefs.current[activeSegment.id];
       if (video && video.duration && !isNaN(video.duration)) {
+        // Tie the video time exactly to the scroll progress within this segment
         video.currentTime = video.duration * clampedLocalProgress;
       }
-    };
+    }
+  }, [segments]);
 
+  useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     // Initial call to set state
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [segments]);
+  }, [handleScroll]);
+
+  // Pre-load video duration metadata
+  const handleMetadataLoaded = (id: string) => {
+    handleScroll(); // Recalculate once metadata is available
+  };
 
   if (!segments || segments.length === 0) {
     return (
@@ -82,8 +86,8 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
           <div
             key={segment.id || `segment-${idx}`}
             className={cn(
-              "absolute inset-0 transition-opacity duration-700 ease-in-out",
-              idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
+              "absolute inset-0 transition-opacity duration-500 ease-in-out",
+              idx === currentIndex ? "opacity-100" : "opacity-0"
             )}
           >
             {segment.videoUrl ? (
@@ -93,14 +97,15 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
                 muted
                 playsInline
                 preload="auto"
-                className="w-full h-full object-cover brightness-[0.7] contrast-[0.9]"
+                onLoadedMetadata={() => handleMetadataLoaded(segment.id)}
+                className="w-full h-full object-cover brightness-[0.7]"
               />
             ) : segment.imageUrl ? (
               <Image
-                src={segment.imageUrl || 'https://picsum.photos/seed/placeholder/1200/800'}
+                src={segment.imageUrl}
                 alt={segment.title || 'Narrative Scene'}
                 fill
-                className="object-cover brightness-[0.85] contrast-[0.9]"
+                className="object-cover brightness-[0.85]"
                 priority={idx === 0}
                 unoptimized={segment.imageUrl?.startsWith('data:')}
               />
@@ -112,7 +117,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
           </div>
         ))}
         {/* Cinematic Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/40" />
       </div>
 
       <ProgressBar 
@@ -126,28 +131,32 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
         {segments.map((segment, idx) => (
           <section
             key={`section-${segment.id || idx}`}
-            className="h-screen flex items-center justify-center px-6 md:px-24 lg:px-48"
+            className="h-[120vh] flex items-center justify-center px-6 md:px-24 lg:px-48"
           >
             <div className={cn(
-              "max-w-2xl text-center md:text-left narrative-overlay",
-              idx === currentIndex ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              "max-w-3xl text-center narrative-overlay",
+              idx === currentIndex ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
             )}>
-              <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 text-primary drop-shadow-sm">
+              <h2 className="text-5xl md:text-8xl font-headline font-bold mb-8 text-primary drop-shadow-lg">
                 {segment.title}
               </h2>
-              <p className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-body">
-                {segment.description}
-              </p>
+              <div className="bg-background/20 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
+                <p className="text-2xl md:text-3xl leading-relaxed text-foreground font-body">
+                  {segment.description}
+                </p>
+              </div>
             </div>
           </section>
         ))}
+        {/* Extra spacer to ensure the last segment can be scrolled through */}
+        <div className="h-[20vh]" />
       </div>
 
       {/* Scroll Hint */}
-      {progress < 0.02 && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-60">
-          <span className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Scroll to Begin</span>
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+      {progress < 0.01 && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-80">
+          <span className="text-xs font-bold tracking-widest uppercase text-primary">Scroll to Explore</span>
+          <ChevronDown className="w-6 h-6 text-primary" />
         </div>
       )}
     </div>

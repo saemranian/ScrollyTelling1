@@ -14,10 +14,11 @@ import { signInAnonymously } from 'firebase/auth';
 
 const initialDefaultSegments: StorySegment[] = [
   {
-    id: '1',
-    title: 'A New Beginning',
-    description: 'The journey began in a small wooden workshop, where every tool held a story and every shaving of wood carried the scent of possibility.',
-    imageUrl: 'https://picsum.photos/seed/story1/1200/800',
+    id: 'intro',
+    title: 'The Great Journey',
+    description: 'Behold the beauty of nature as we traverse through the wild fields. Every movement captured in time, waiting for you to move the clock.',
+    imageUrl: 'https://picsum.photos/seed/bunny1/1200/800',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     order: 0,
   }
 ];
