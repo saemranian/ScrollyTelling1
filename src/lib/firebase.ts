@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
@@ -11,8 +10,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Check if config is valid to avoid crashing the client
+const isConfigValid = !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
+
+const app = getApps().length > 0 
+  ? getApp() 
+  : (isConfigValid ? initializeApp(firebaseConfig) : null);
+
+const db = app ? getFirestore(app) : null;
 
 export { db };

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +7,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { getStorySegments, saveStorySegments } from '@/services/story-service';
+import { db } from '@/lib/firebase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Database } from 'lucide-react';
 
 const initialDefaultSegments: StorySegment[] = [
   {
@@ -47,12 +49,13 @@ export default function EditorPage() {
         title: "Narrative Saved",
         description: "Your story segments have been persisted to the database.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Save Failed",
-        description: "There was an error saving to the database. Please check your connection.",
+        description: error.message || "There was an error saving to the database.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -66,6 +69,17 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {!db && (
+        <div className="max-w-4xl mx-auto pt-6 px-6">
+          <Alert variant="destructive">
+            <Database className="h-4 w-4" />
+            <AlertTitle>Database Not Connected</AlertTitle>
+            <AlertDescription>
+              Your Firebase API keys are missing. Please add them to your .env file to enable saving.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       <StoryEditor 
         initialSegments={segments} 
         onSave={handleSave} 

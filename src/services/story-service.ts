@@ -1,4 +1,3 @@
-
 import { db } from "@/lib/firebase";
 import { 
   collection, 
@@ -6,8 +5,7 @@ import {
   doc, 
   query, 
   orderBy, 
-  writeBatch,
-  deleteDoc
+  writeBatch
 } from "firebase/firestore";
 import { StorySegment } from "@/components/story/StoryTypes";
 
@@ -17,6 +15,11 @@ const COLLECTION_NAME = "story_segments";
  * Fetches all story segments from Firestore, ordered by their sequence.
  */
 export async function getStorySegments(): Promise<StorySegment[]> {
+  if (!db) {
+    console.warn("Firestore is not initialized. Check your environment variables.");
+    return [];
+  }
+  
   try {
     const q = query(collection(db, COLLECTION_NAME), orderBy("order", "asc"));
     const querySnapshot = await getDocs(q);
@@ -32,20 +35,22 @@ export async function getStorySegments(): Promise<StorySegment[]> {
 
 /**
  * Persists the entire list of story segments to Firestore.
- * For this prototype, it replaces the collection to ensure order and deletions are synced.
  */
 export async function saveStorySegments(segments: StorySegment[]): Promise<void> {
+  if (!db) {
+    throw new Error("Database not connected. Please check your Firebase project settings.");
+  }
+
   const batch = writeBatch(db);
   
-  // 1. Get current segments to delete them (simplifies sync for prototype)
+  // 1. Get current segments to clear them (simplifies sync for prototype)
   const currentSegmentsSnapshot = await getDocs(collection(db, COLLECTION_NAME));
   currentSegmentsSnapshot.forEach((document) => {
     batch.delete(doc(db, COLLECTION_NAME, document.id));
   });
 
-  // 2. Add the new/updated segments with updated order
+  // 2. Add the new/updated segments
   segments.forEach((segment, index) => {
-    // Generate a clean ID if it doesn't exist, otherwise use existing
     const segmentId = segment.id || doc(collection(db, COLLECTION_NAME)).id;
     const segmentRef = doc(db, COLLECTION_NAME, segmentId);
     
