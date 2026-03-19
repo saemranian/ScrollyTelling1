@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save, FileVideo, HardDrive } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save, FileVideo, HardDrive, Sparkle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -65,125 +65,143 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
-      <header className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+    <div className="max-w-5xl mx-auto py-16 px-6">
+      <header className="flex items-center justify-between mb-12">
+        <div className="flex items-center gap-6">
           <Link href="/">
-            <Button variant="outline" size="icon" className="rounded-full">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="outline" size="icon" className="rounded-full h-12 w-12 border-2">
+              <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-headline font-bold text-primary">Narrative Editor</h1>
+          <div>
+            <h1 className="text-4xl font-headline font-bold text-primary">Narrative Studio</h1>
+            <p className="text-sm text-muted-foreground">Craft your interactive scrollytelling experience.</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={addSegment} disabled={isSaving}>
-            <Plus className="w-4 h-4 mr-2" /> Add Segment
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={addSegment} disabled={isSaving} className="h-12 border-2">
+            <Plus className="w-4 h-4 mr-2" /> Add Chapter
           </Button>
-          <Button onClick={handleSaveClick} disabled={isSaving}>
+          <Button onClick={handleSaveClick} disabled={isSaving} className="h-12 px-8 shadow-lg shadow-primary/20">
             {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? 'Persisting...' : 'Save Narrative'}
           </Button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-        <Alert className="bg-primary/5 border-primary/20">
-          <HardDrive className="h-4 w-4" />
-          <AlertTitle>Using Local Files</AlertTitle>
-          <AlertDescription className="text-xs">
-            1. Put your MP4 files in the <strong>public/</strong> folder of this project.<br/>
-            2. In the "Video URL" field below, type <strong>/your-filename.mp4</strong>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <Alert className="bg-primary/5 border-primary/20 col-span-1">
+          <HardDrive className="h-4 w-4 text-primary" />
+          <AlertTitle className="text-primary font-bold">1. Folder Setup</AlertTitle>
+          <AlertDescription className="text-xs leading-relaxed">
+            Drop your video files into the <strong>public/</strong> folder. Use paths like <code>/my-video.webm</code> below.
           </AlertDescription>
         </Alert>
-        <Alert className="bg-secondary/5 border-secondary/20">
-          <FileVideo className="h-4 w-4" />
-          <AlertTitle>Pro-Tip: Smooth Scrolling</AlertTitle>
-          <AlertDescription className="text-xs">
-            When exporting your video from PNGs, set <strong>Keyframe Distance to 1</strong>. This makes the scrolly-telling perfectly smooth!
+        <Alert className="bg-secondary/5 border-secondary/20 col-span-1">
+          <FileVideo className="h-4 w-4 text-secondary" />
+          <AlertTitle className="text-secondary font-bold">2. Transparency</AlertTitle>
+          <AlertDescription className="text-xs leading-relaxed">
+            For transparent videos, use <strong>WebM (VP9 with Alpha)</strong>. Set Keyframe Distance to 1 for smooth scrolling.
+          </AlertDescription>
+        </Alert>
+        <Alert className="bg-accent/5 border-accent/20 col-span-1">
+          <Sparkle className="h-4 w-4 text-accent" />
+          <AlertTitle className="text-accent font-bold">3. AI Power</AlertTitle>
+          <AlertDescription className="text-xs leading-relaxed">
+            Use the "AI Enhance" button to turn a simple title into a poetic narrative description.
           </AlertDescription>
         </Alert>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {segments.map((segment, index) => (
-          <Card key={segment.id} className="overflow-hidden border-muted shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b">
-              <CardTitle className="text-lg font-bold text-primary/80">Segment #{index + 1}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => removeSegment(segment.id)} className="text-destructive hover:bg-destructive/10">
+          <Card key={segment.id} className="overflow-hidden border-2 border-muted/30 shadow-xl transition-all hover:border-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between bg-muted/10 border-b px-8 py-4">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                  {index + 1}
+                </span>
+                <CardTitle className="text-lg font-bold text-foreground/80">Chapter Configuration</CardTitle>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSegment(segment.id)} className="text-destructive hover:bg-destructive/10 rounded-full">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Chapter Title</label>
+            <CardContent className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Title Overlay</label>
                   <Input 
-                    placeholder="Enter segment title..."
+                    className="h-12 text-lg border-2 focus-visible:ring-primary"
+                    placeholder="e.g. The Awakening"
                     value={segment.title} 
                     onChange={(e) => updateSegment(segment.id, { title: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Story Text</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Narrative Prose</label>
                     <Button 
-                      variant="ghost" 
+                      variant="secondary" 
                       size="sm" 
                       onClick={() => handleAiGenerate(segment.id, segment.title)}
                       disabled={isGenerating === segment.id}
-                      className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                      className="h-8 text-xs font-bold px-4"
                     >
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      {isGenerating === segment.id ? 'Writing...' : 'AI Enhance'}
+                      <Sparkles className="w-3 h-3 mr-2" />
+                      {isGenerating === segment.id ? 'Generating...' : 'AI Enhance'}
                     </Button>
                   </div>
                   <Textarea 
-                    placeholder="Describe this part of the journey..."
-                    rows={5}
+                    className="text-base border-2 focus-visible:ring-primary leading-relaxed"
+                    placeholder="Tell the story of this segment..."
+                    rows={6}
                     value={segment.description} 
                     onChange={(e) => updateSegment(segment.id, { description: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <LucideImage className="w-3 h-3" /> Background Image URL
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                      <LucideImage className="w-3 h-3" /> Static Poster Image (URL)
                     </label>
                     <Input 
+                      className="border-2"
                       placeholder="https://images.unsplash.com/..."
                       value={segment.imageUrl} 
                       onChange={(e) => updateSegment(segment.id, { imageUrl: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <Video className="w-3 h-3" /> Direct Video URL (MP4)
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                      <Video className="w-3 h-3" /> Interactive Video Path (WebM / MP4)
                     </label>
                     <Input 
-                      placeholder="/video1.mp4 or https://site.com/video.mp4"
+                      className="border-2"
+                      placeholder="/hero-animation.webm"
                       value={segment.videoUrl || ''} 
                       onChange={(e) => updateSegment(segment.id, { videoUrl: e.target.value })}
                     />
                   </div>
                 </div>
                 
-                <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border-2 border-muted-foreground/10 group">
+                <div className="aspect-video relative rounded-2xl overflow-hidden bg-muted/30 border-2 border-dashed border-muted-foreground/20 group">
                    {segment.videoUrl ? (
-                     <div className="w-full h-full bg-black flex items-center justify-center">
-                        <Video className="w-12 h-12 text-white/20" />
-                        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/40 font-bold uppercase tracking-widest">Video Linked</span>
+                     <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-2">
+                        <Video className="w-10 h-10 text-white/10" />
+                        <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Video Linked: {segment.videoUrl}</span>
                      </div>
                    ) : (
                      <img 
                        src={segment.imageUrl} 
                        alt="Preview" 
-                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                       className="object-cover w-full h-full opacity-60 group-hover:scale-105 transition-transform duration-700"
                      />
                    )}
-                   <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white font-bold uppercase tracking-tighter">
-                     Preview
+                   <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary/10">
+                     Source Preview
                    </div>
                 </div>
               </div>
@@ -193,10 +211,10 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
       </div>
 
       {segments.length === 0 && (
-        <div className="text-center py-24 border-2 border-dashed border-muted rounded-xl bg-muted/5">
-          <p className="text-muted-foreground mb-4 font-body">Your narrative is currently empty.</p>
-          <Button onClick={addSegment} className="rounded-full px-8">
-            <Plus className="w-4 h-4 mr-2" /> Start Your First Chapter
+        <div className="text-center py-32 border-4 border-dashed border-muted/50 rounded-3xl bg-muted/5">
+          <p className="text-muted-foreground mb-6 font-body text-xl">Your narrative journey begins with a single chapter.</p>
+          <Button onClick={addSegment} className="h-14 px-10 rounded-full text-lg shadow-xl shadow-primary/10">
+            <Plus className="w-5 h-5 mr-3" /> Create Your First Segment
           </Button>
         </div>
       )}

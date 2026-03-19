@@ -49,8 +49,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
 
       const video = videoRefs.current[activeSegment.id];
       if (video && video.duration && !isNaN(video.duration)) {
-        // Tie the video time exactly to the scroll progress within this segment
-        // Using requestAnimationFrame for smoother scrubbing performance
+        // Use requestAnimationFrame for high-performance frame scrubbing
         requestAnimationFrame(() => {
           if (video) {
             video.currentTime = video.duration * clampedLocalProgress;
@@ -62,11 +61,10 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial call to set state
     handleScroll();
     
-    // Safety timeout to show content even if metadata takes too long
-    const timer = setTimeout(() => setIsReady(true), 1500);
+    // Ensure we mark as ready after a fallback timeout
+    const timer = setTimeout(() => setIsReady(true), 2000);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -93,12 +91,15 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
   return (
     <div ref={containerRef} className="relative w-full">
       {/* Background Media Layer */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-0">
+      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+        {/* Subtle animated background gradient to show through transparent videos */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#fdfbfb_0%,#ebedee_100%)] opacity-50" />
+        
         {segments.map((segment, idx) => (
           <div
             key={segment.id || `segment-${idx}`}
             className={cn(
-              "absolute inset-0 transition-opacity duration-700 ease-in-out",
+              "absolute inset-0 transition-opacity duration-1000 ease-in-out flex items-center justify-center",
               idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
             )}
           >
@@ -110,32 +111,33 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
                 playsInline
                 preload="auto"
                 onLoadedMetadata={handleMetadataLoaded}
-                className="w-full h-full object-cover brightness-[0.7]"
+                // Removing background-black to allow alpha transparency to show through
+                className="w-full h-full object-contain"
               />
             ) : segment.imageUrl ? (
               <Image
                 src={segment.imageUrl}
                 alt={segment.title || 'Narrative Scene'}
                 fill
-                className="object-cover brightness-[0.85]"
+                className="object-cover brightness-[0.9]"
                 priority={idx === 0}
                 unoptimized={segment.imageUrl?.startsWith('data:')}
               />
             ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
+              <div className="w-full h-full bg-muted/20 flex items-center justify-center">
                 <p className="text-muted-foreground text-xs uppercase tracking-widest">No Media</p>
               </div>
             )}
           </div>
         ))}
         {/* Cinematic Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/20 pointer-events-none" />
       </div>
 
       {!isReady && (
         <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Preparing Narrative...</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Initializing Scene...</p>
         </div>
       )}
 
@@ -150,17 +152,17 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
         {segments.map((segment, idx) => (
           <section
             key={`section-${segment.id || idx}`}
-            className="h-[150vh] flex items-center justify-center px-6 md:px-24 lg:px-48"
+            className="h-[200vh] flex items-center justify-center px-6 md:px-24"
           >
             <div className={cn(
-              "max-w-3xl text-center narrative-overlay",
+              "max-w-4xl text-center narrative-overlay",
               idx === currentIndex ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
             )}>
-              <h2 className="text-5xl md:text-8xl font-headline font-bold mb-8 text-primary drop-shadow-lg transition-all duration-700">
+              <h2 className="text-6xl md:text-9xl font-headline font-bold mb-10 text-primary/90 drop-shadow-sm transition-all duration-1000">
                 {segment.title}
               </h2>
-              <div className="bg-background/20 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
-                <p className="text-2xl md:text-3xl leading-relaxed text-foreground font-body">
+              <div className="bg-white/40 backdrop-blur-xl p-10 rounded-3xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)]">
+                <p className="text-2xl md:text-4xl leading-relaxed text-foreground/80 font-body font-medium">
                   {segment.description}
                 </p>
               </div>
@@ -168,14 +170,14 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
           </section>
         ))}
         {/* Extra spacer to ensure the last segment can be fully explored */}
-        <div className="h-[20vh]" />
+        <div className="h-[50vh]" />
       </div>
 
       {/* Scroll Hint */}
       {progress < 0.01 && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-80">
-          <span className="text-xs font-bold tracking-widest uppercase text-primary">Scroll to Explore</span>
-          <ChevronDown className="w-6 h-6 text-primary" />
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 animate-bounce opacity-60">
+          <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-primary">Begin Exploration</span>
+          <ChevronDown className="w-5 h-5 text-primary" />
         </div>
       )}
     </div>
