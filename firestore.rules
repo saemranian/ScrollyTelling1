@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * NarrativeFlow Security Rules
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict ownership-based access model designed for content creators.
+     * It leverages structural segregation to separate private drafts from public content, ensuring 
+     * high performance and simplified security logic.
+     *
+     * DATA STRUCTURE:
+     * - Private Data: Nested under `/users/{userId}/...` (Profiles, Drafts, Segments, Video Assets).
+     * - Public Data: Located in top-level collections like `/published_stories/...`.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Ownership: For all data under `/users/{userId}`, access is restricted to the
+     *    authenticated user whose UID matches the `{userId}` wildcard.
+     * 2. Public Read/Private Write: Published stories and their segments are globally readable, 
+     *    but write operations (create, update, delete) require the user's UID to match the 
+     *    denormalized `creatorId` field.
+     * 3. Authorization Independence: All security decisions for published content rely on fields 
+     *    stored directly on the document (e.g., `creatorId`) to avoid slow cross-document lookups.
+     * 4. Prototyping Flexibility: Rules enforce strict authorization and relational integrity 
+     *    (e.g., owner IDs must match) but remain flexible regarding data schema to allow rapid iteration.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the authenticated user's ID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Checks if the user is the owner and the document exists (for updates/deletes). */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** Validates that an author-controlled field in the incoming data matches the user. */
+    function isAuthor(authorId) {
+      return isSignedIn() && request.auth.uid == authorId;
+    }
+
+    /** Validates that the existing document belongs to the author (for updates/deletes). */
+    function isExistingAuthor(authorId) {
+      return resource != null && isAuthor(authorId);
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the UserProfile entity. Only the profile owner can read or write their profile.
+     * @path /users/{userId}
+     * @allow (get) request.auth.uid == "user_123" accessing /users/user_123
+     * @deny (list) request.auth.uid == "user_123" attempting to list /users/ (Forbidden)
+     * @principle Path-based ownership and self-creation validation.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Private draft stories. Accessible only by the creator via path-based ownership.
+       * @path /users/{userId}/draft_stories/{storyId}
+       * @allow (create) request.auth.uid == "user_123" creating story in /users/user_123/draft_stories/story_A
+       * @deny (get) request.auth.uid == "user_abc" accessing /users/user_123/draft_stories/story_A
+       * @principle Restricts access to a user's own private draft tree.
+       */
+      match /draft_stories/{storyId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.creatorId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.creatorId == resource.data.creatorId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Segments for draft stories. Inherits ownership from the parent user path.
+         * @path /users/{userId}/draft_stories/{storyId}/segments/{segmentId}
+         * @allow (list) user "user_123" listing segments in their own story path.
+         * @deny (update) changing the storyId or creatorId during an update.
+         * @principle Validates relational integrity and ownership in subcollections.
+         */
+        match /segments/{segmentId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.storyId == storyId;
+          allow update: if isExistingOwner(userId) && request.resource.data.storyId == resource.data.storyId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+
+      /**
+       * @description Private video metadata. Metadata is restricted to the uploader.
+       * @path /users/{userId}/video_assets/{videoId}
+       * @allow (get) user "user_123" accessing their own uploaded video metadata.
+       * @deny (delete) user "user_abc" deleting video metadata in "user_123"'s folder.
+       * @principle Path-based ownership for private media references.
+       */
+      match /video_assets/{videoId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.uploadedByUserId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.uploadedByUserId == resource.data.uploadedByUserId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Publicly accessible stories. Reads are open, writes are restricted to the creator.
+     * @path /published_stories/{storyId}
+     * @allow (get) unauthenticated user reading a story.
+     * @deny (create) user "user_123" creating a story where "creatorId" is "user_abc".
+     * @principle Public read with owner-only writes using denormalized ownership fields.
+     */
+    match /published_stories/{storyId} {
+      allow get, list: if true;
+      allow create: if isAuthor(request.resource.data.creatorId);
+      allow update: if isExistingAuthor(resource.data.creatorId) && request.resource.data.creatorId == resource.data.creatorId;
+      allow delete: if isExistingAuthor(resource.data.creatorId);
+
+      /**
+       * @description Public segments of published stories.
+       * @path /published_stories/{storyId}/segments/{segmentId}
+       * @allow (list) anyone listing segments of a public story.
+       * @deny (update) modifying a segment created by another user.
+       * @principle Inherits public visibility; enforces ownership via denormalized creatorId.
+       */
+      match /segments/{segmentId} {
+        allow get, list: if true;
+        allow create: if isAuthor(request.resource.data.creatorId);
+        allow update: if isExistingAuthor(resource.data.creatorId) && request.resource.data.creatorId == resource.data.creatorId;
+        allow delete: if isExistingAuthor(resource.data.creatorId);
+      }
+    }
+  }
+}

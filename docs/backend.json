@@ -1,27 +1,316 @@
 {
   "entities": {
-    "StorySegment": {
-      "title": "StorySegment",
-      "description": "A single chapter or segment of the interactive narrative.",
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
       "type": "object",
+      "description": "Represents a user account in the NarrativeFlow application, primarily for content creators who upload and manage stories and media.",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "imageUrl": { "type": "string" },
-        "videoUrl": { "type": "string" },
-        "order": { "type": "number" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The public name chosen by the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for contact and identification.",
+          "format": "email"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "title", "description", "imageUrl", "order"]
+      "required": [
+        "id",
+        "displayName",
+        "email",
+        "createdAt"
+      ]
+    },
+    "Story": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Story",
+      "type": "object",
+      "description": "Represents a complete interactive narrative, composed of multiple synchronized scroll-driven segments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Story entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The main title of the interactive story."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A brief summary or synopsis of the story's content."
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who created this story. (Relationship: UserProfile 1:N Story)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the story was initially created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the story was last updated.",
+          "format": "date-time"
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Indicates whether the story is publicly accessible or still in draft mode."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "shortDescription",
+        "creatorId",
+        "createdAt",
+        "isPublished"
+      ]
+    },
+    "StorySegment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StorySegment",
+      "type": "object",
+      "description": "A single scroll-driven interactive segment within a story, linking a specific video portion with narrative text and synchronization points.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StorySegment entity."
+        },
+        "storyId": {
+          "type": "string",
+          "description": "Reference to the parent Story this segment belongs to. (Relationship: Story 1:N StorySegment)"
+        },
+        "segmentOrder": {
+          "type": "number",
+          "description": "The sequential order of this segment within its parent story, determining playback flow."
+        },
+        "titleOverlay": {
+          "type": "string",
+          "description": "A short, dynamic title displayed as an overlay during this specific story segment."
+        },
+        "narrativeText": {
+          "type": "string",
+          "description": "The descriptive text that accompanies and explains the video content for this segment."
+        },
+        "videoAssetId": {
+          "type": "string",
+          "description": "Reference to the VideoAsset used for this segment. (Relationship: VideoAsset 1:N StorySegment)"
+        },
+        "startScrollPosition": {
+          "type": "number",
+          "description": "A normalized value (0-1) representing the scroll progress where this segment's content or animation begins."
+        },
+        "endScrollPosition": {
+          "type": "number",
+          "description": "A normalized value (0-1) representing the scroll progress where this segment's content or animation ends."
+        },
+        "videoStartTimeSeconds": {
+          "type": "number",
+          "description": "The precise start time in seconds within the referenced video asset for this segment."
+        },
+        "videoEndTimeSeconds": {
+          "type": "number",
+          "description": "The precise end time in seconds within the referenced video asset for this segment."
+        }
+      },
+      "required": [
+        "id",
+        "storyId",
+        "segmentOrder",
+        "titleOverlay",
+        "narrativeText",
+        "videoAssetId",
+        "startScrollPosition",
+        "endScrollPosition",
+        "videoStartTimeSeconds",
+        "videoEndTimeSeconds"
+      ]
+    },
+    "VideoAsset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VideoAsset",
+      "type": "object",
+      "description": "Represents a physical stop-motion video file uploaded and available for use within story segments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the VideoAsset entity."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The original file name of the uploaded video."
+        },
+        "storageUrl": {
+          "type": "string",
+          "description": "The Uniform Resource Locator (URL) pointing to the stored video file (e.g., in cloud storage or a CDN).",
+          "format": "uri"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "The MIME type of the video file (e.g., 'video/mp4', 'video/webm')."
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "The total duration of the video in seconds."
+        },
+        "uploadedByUserId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who uploaded this video asset. (Relationship: UserProfile 1:N VideoAsset)"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the video asset was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "storageUrl",
+        "mimeType",
+        "durationSeconds",
+        "uploadedByUserId",
+        "uploadedAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/story_segments/{segmentId}": {
-      "schema": "StorySegment",
-      "description": "Collection of story segments ordered for the narrative."
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. This collection is private, with documents accessible only by the user whose ID matches the {userId} in the path. This path-based ownership enforces strong data isolation for each user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching 'request.auth.uid'."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/draft_stories/{storyId}",
+        "definition": {
+          "entityName": "Story",
+          "schema": {
+            "$ref": "#/backend/entities/Story"
+          },
+          "description": "Contains stories that are in draft mode, meaning they are not yet published. Documents in this subcollection are private and only accessible by the user whose ID matches the {userId} in the path (the creator). The 'creatorId' field within the Story document is implicitly {userId} and 'isPublished' is implicitly false due to its location.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this draft story, matching 'request.auth.uid'."
+            },
+            {
+              "name": "storyId",
+              "description": "The unique identifier for the specific draft story."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/published_stories/{storyId}",
+        "definition": {
+          "entityName": "Story",
+          "schema": {
+            "$ref": "#/backend/entities/Story"
+          },
+          "description": "Houses stories that have been published and are publicly accessible for reading by anyone. Write operations are restricted to the 'creatorId' field denormalized within the Story document, matching 'request.auth.uid'. The 'isPublished' field is implicitly true due to this collection's purpose. Includes denormalized 'creatorId' for authorization independence.",
+          "params": [
+            {
+              "name": "storyId",
+              "description": "The unique identifier for the specific published story."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/draft_stories/{storyId}/segments/{segmentId}",
+        "definition": {
+          "entityName": "StorySegment",
+          "schema": {
+            "$ref": "#/backend/entities/StorySegment"
+          },
+          "description": "Represents segments belonging to a draft story. These segments inherit the private access rules from their parent draft story. Only the creator (matching {userId}) can access or modify these segments. Includes denormalized 'creatorId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the parent draft story."
+            },
+            {
+              "name": "storyId",
+              "description": "The unique identifier of the parent draft story."
+            },
+            {
+              "name": "segmentId",
+              "description": "The unique identifier for the specific story segment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/published_stories/{storyId}/segments/{segmentId}",
+        "definition": {
+          "entityName": "StorySegment",
+          "schema": {
+            "$ref": "#/backend/entities/StorySegment"
+          },
+          "description": "Contains segments of published stories. These segments are publicly readable by anyone, mirroring the access of their parent published story. Write operations are restricted to the 'creatorId' field denormalized within the StorySegment document, matching 'request.auth.uid'. Crucially, the 'videoStorageUrl' from the associated VideoAsset is denormalized here to allow public client access to video content without requiring 'get()' calls to private VideoAsset documents, ensuring authorization independence for public story playback. Includes denormalized 'creatorId' and 'videoStorageUrl' for authorization independence.",
+          "params": [
+            {
+              "name": "storyId",
+              "description": "The unique identifier of the parent published story."
+            },
+            {
+              "name": "segmentId",
+              "description": "The unique identifier for the specific story segment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/video_assets/{videoId}",
+        "definition": {
+          "entityName": "VideoAsset",
+          "schema": {
+            "$ref": "#/backend/entities/VideoAsset"
+          },
+          "description": "Stores metadata for video assets uploaded by users. Documents in this collection are private, accessible only by the user whose ID matches the {userId} in the path (the uploader). The 'uploadedByUserId' field is implicitly {userId} due to this path. The 'storageUrl' itself is expected to point to an external storage location which handles its own access control, potentially public for use in published stories (via denormalization into StorySegment).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who uploaded this video asset, matching 'request.auth.uid'."
+            },
+            {
+              "name": "videoId",
+              "description": "The unique identifier for the specific video asset."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure for NarrativeFlow prioritizes secure, scalable, and debuggable authorization rules by adhering to the core design principles:\n\n1.  **Authorization Independence & Denormalization:** This is CRITICAL for robust rules and atomic operations. Instead of relying on `get()` calls to parent documents for authorization, key authorization fields are denormalized into subcollection documents. For instance, `creatorId` is denormalized into `Story` and `StorySegment` documents within public collections. For `StorySegment`, the `videoStorageUrl` (originally from `VideoAsset`) is also denormalized into the published `StorySegment` documents. This ensures that a single document read or write operation provides all necessary context for authorization, eliminating expensive and dependency-prone `get()` calls.\n\n2.  **Structural Segregation (Homogeneous Security Posture):** Data with differing access requirements is placed in distinct collections. Stories, for example, are split into `/users/{userId}/draft_stories/{storyId}` (private, owner-only) and `/published_stories/{storyId}` (publicly readable, owner-writable). This makes security rules incredibly straightforward: a document's path directly implies its base security posture (e.g., anything in `/published_stories` is public).\n\n3.  **Path-Based Ownership for Private Data:** User-specific entities like `UserProfile`, `draft_stories`, and `video_assets` are housed under `/users/{userId}/...`. This automatically ties ownership to the authenticated user (`request.auth.uid`), simplifying rules to `request.auth.uid == userId` (where `userId` is the path wildcard).\n\n4.  **QAPs (Rules are not Filters) Support:**\n    *   For private collections (`/users/{userId}/...`), `list` operations are naturally secure because `userId` in the path must match `request.auth.uid`. A user can only list their own data.\n    *   For public collections (`/published_stories` and its subcollections), `list` operations are allowed for all authenticated users, aligning with the requirement for public content. No `get()` calls are needed to determine if an item in the list is visible, as the collection itself denotes public visibility. This allows for efficient querying without needing additional filters or complex rules.\n\n5.  **Explicit State Modeling & Predictable Schema:** The `isPublished` field (implicitly or explicitly via collection name) clearly defines a story's state. Consistent naming like `creatorId`, `uploadedByUserId`, and descriptive path wildcards (`{storyId}`, `{userId}`) enhance clarity and debuggability.\n\n**Regarding the NextJS Hydration Error:** The reported error is a client-side issue, likely caused by a browser extension (such as Grammarly) injecting attributes into the `<body>` tag before React completes hydration. This is not related to the Firestore data model and cannot be fixed by changes to the database structure. It's an external browser environment issue."
   }
 }
