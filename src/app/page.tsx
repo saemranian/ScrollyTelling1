@@ -12,20 +12,28 @@ import { useFirestore } from '@/firebase';
 
 const defaultSegments: StorySegment[] = [
   {
-    id: 'intro',
-    title: 'The Great Journey',
-    description: 'Behold the beauty of nature as we traverse through the wild fields. Every movement captured in time, waiting for you to move the clock.',
-    imageUrl: 'https://picsum.photos/seed/bunny1/1200/800',
+    id: 'chapter-1',
+    title: 'The Beginning',
+    description: 'Place your first video in the public folder and link it here to start the journey.',
+    imageUrl: 'https://picsum.photos/seed/scene1/1200/800',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     order: 0,
   },
   {
-    id: 'climax',
-    title: 'Hidden Secrets',
-    description: 'The forest holds secrets only revealed to those who look closely. Scroll to see the world come alive around you.',
-    imageUrl: 'https://picsum.photos/seed/bunny2/1200/800',
+    id: 'chapter-2',
+    title: 'The Progression',
+    description: 'As you scroll, the second video will scrub frame-by-frame, creating a stop-motion feel.',
+    imageUrl: 'https://picsum.photos/seed/scene2/1200/800',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     order: 1,
+  },
+  {
+    id: 'chapter-3',
+    title: 'The Conclusion',
+    description: 'The final chapter brings the narrative to a close with your third interactive video.',
+    imageUrl: 'https://picsum.photos/seed/scene3/1200/800',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    order: 2,
   }
 ];
 

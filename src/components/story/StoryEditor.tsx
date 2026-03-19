@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save, FileVideo } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -25,7 +26,7 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
     const newSegment: StorySegment = {
       id: Math.random().toString(36).substr(2, 9),
       title: 'New Chapter',
-      description: 'Once upon a time...',
+      description: 'Continue the story...',
       imageUrl: `https://picsum.photos/seed/${Math.random()}/1200/800`,
       order: segments.length,
     };
@@ -85,13 +86,22 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
         </div>
       </header>
 
-      <Alert className="mb-10 bg-primary/5 border-primary/20">
-        <Info className="h-4 w-4" />
-        <AlertTitle>Pro Tip: Stop-Motion Effect</AlertTitle>
-        <AlertDescription>
-          To create a "Stop-Motion" scrubbing effect, use a <strong>direct link to an MP4 file</strong>. Standard YouTube links do not support frame-by-frame scroll synchronization.
-        </AlertDescription>
-      </Alert>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+        <Alert className="bg-primary/5 border-primary/20">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Interactive Scroll Sync</AlertTitle>
+          <AlertDescription className="text-xs">
+            Use a <strong>direct MP4 link</strong> to enable the stop-motion effect. YouTube links will not work for scroll synchronization.
+          </AlertDescription>
+        </Alert>
+        <Alert className="bg-secondary/5 border-secondary/20">
+          <FileVideo className="h-4 w-4" />
+          <AlertTitle>Using Local Videos</AlertTitle>
+          <AlertDescription className="text-xs">
+            Place your videos in the <code>public/</code> folder of your code. Then use the path <code>/video1.mp4</code> in the Video URL field below.
+          </AlertDescription>
+        </Alert>
+      </div>
 
       <div className="space-y-8">
         {segments.map((segment, index) => (
@@ -151,11 +161,10 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                       <Video className="w-3 h-3" /> Direct Video URL (MP4)
                     </label>
                     <Input 
-                      placeholder="https://mysite.com/video.mp4"
+                      placeholder="/video1.mp4 or https://site.com/video.mp4"
                       value={segment.videoUrl || ''} 
                       onChange={(e) => updateSegment(segment.id, { videoUrl: e.target.value })}
                     />
-                    <p className="text-[10px] text-muted-foreground italic">Required for stop-motion scroll sync. YouTube/Vimeo links will not sync with scroll.</p>
                   </div>
                 </div>
                 
