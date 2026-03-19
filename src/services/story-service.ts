@@ -1,11 +1,11 @@
-import { db } from "@/lib/firebase";
 import { 
   collection, 
   getDocs, 
   doc, 
   query, 
   orderBy, 
-  writeBatch
+  writeBatch,
+  Firestore
 } from "firebase/firestore";
 import { StorySegment } from "@/components/story/StoryTypes";
 
@@ -14,12 +14,7 @@ const COLLECTION_NAME = "story_segments";
 /**
  * Fetches all story segments from Firestore, ordered by their sequence.
  */
-export async function getStorySegments(): Promise<StorySegment[]> {
-  if (!db) {
-    console.warn("Firestore is not initialized. Check your environment variables.");
-    return [];
-  }
-  
+export async function getStorySegments(db: Firestore): Promise<StorySegment[]> {
   try {
     const q = query(collection(db, COLLECTION_NAME), orderBy("order", "asc"));
     const querySnapshot = await getDocs(q);
@@ -36,11 +31,7 @@ export async function getStorySegments(): Promise<StorySegment[]> {
 /**
  * Persists the entire list of story segments to Firestore.
  */
-export async function saveStorySegments(segments: StorySegment[]): Promise<void> {
-  if (!db) {
-    throw new Error("Database not connected. Please check your Firebase project settings.");
-  }
-
+export async function saveStorySegments(db: Firestore, segments: StorySegment[]): Promise<void> {
   const batch = writeBatch(db);
   
   // 1. Get current segments to clear them (simplifies sync for prototype)
@@ -54,8 +45,11 @@ export async function saveStorySegments(segments: StorySegment[]): Promise<void>
     const segmentId = segment.id || doc(collection(db, COLLECTION_NAME)).id;
     const segmentRef = doc(db, COLLECTION_NAME, segmentId);
     
+    // Create a data object without the id to avoid duplicate ID fields in the document data
+    const { id, ...data } = segment;
+    
     batch.set(segmentRef, {
-      ...segment,
+      ...data,
       id: segmentId,
       order: index
     });

@@ -7,9 +7,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { getStorySegments, saveStorySegments } from '@/services/story-service';
-import { db } from '@/lib/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Database } from 'lucide-react';
+import { Database, Loader2 } from 'lucide-react';
 
 const initialDefaultSegments: StorySegment[] = [
   {
@@ -23,13 +23,16 @@ const initialDefaultSegments: StorySegment[] = [
 
 export default function EditorPage() {
   const { toast } = useToast();
+  const db = useFirestore();
+  const { user, isUserLoading } = useUser();
   const [segments, setSegments] = useState<StorySegment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      if (!db) return;
       try {
-        const data = await getStorySegments();
+        const data = await getStorySegments(db);
         setSegments(data.length > 0 ? data : initialDefaultSegments);
       } catch (error) {
         console.error("Failed to load segments:", error);
@@ -39,11 +42,20 @@ export default function EditorPage() {
       }
     }
     loadData();
-  }, []);
+  }, [db]);
 
   const handleSave = async (newSegments: StorySegment[]) => {
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore instance not available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      await saveStorySegments(newSegments);
+      await saveStorySegments(db, newSegments);
       setSegments(newSegments);
       toast({
         title: "Narrative Saved",
@@ -59,10 +71,13 @@ export default function EditorPage() {
     }
   };
 
-  if (loading) {
+  if (loading || isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground animate-pulse">Loading Narrative Data...</p>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading Narrative Data...</p>
+        </div>
       </div>
     );
   }
@@ -75,7 +90,7 @@ export default function EditorPage() {
             <Database className="h-4 w-4" />
             <AlertTitle>Database Not Connected</AlertTitle>
             <AlertDescription>
-              Your Firebase API keys are missing. Please add them to your .env file to enable saving.
+              Firestore could not be initialized. Please check your Firebase configuration.
             </AlertDescription>
           </Alert>
         </div>

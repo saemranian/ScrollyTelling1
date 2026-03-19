@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Edit3, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { getStorySegments } from '@/services/story-service';
+import { useFirestore } from '@/firebase';
 
 const defaultSegments: StorySegment[] = [
   {
@@ -21,13 +21,15 @@ const defaultSegments: StorySegment[] = [
 ];
 
 export default function Home() {
+  const db = useFirestore();
   const [segments, setSegments] = useState<StorySegment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      if (!db) return;
       try {
-        const data = await getStorySegments();
+        const data = await getStorySegments(db);
         setSegments(data.length > 0 ? data : defaultSegments);
       } catch (error) {
         console.error("Failed to load segments:", error);
@@ -37,7 +39,7 @@ export default function Home() {
       }
     }
     loadData();
-  }, []);
+  }, [db]);
 
   if (loading) {
     return (
