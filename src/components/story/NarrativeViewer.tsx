@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { StorySegment } from './StoryTypes';
 import { ProgressBar } from './ProgressBar';
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 
 interface NarrativeViewerProps {
   segments: StorySegment[];
@@ -15,6 +15,7 @@ interface NarrativeViewerProps {
 export function NarrativeViewer({ segments }: NarrativeViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
@@ -41,7 +42,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
 
     // Stop-motion scrubbing logic
     const activeSegment = segments[index];
-    if (activeSegment) {
+    if (activeSegment && activeSegment.id) {
       const segmentStartPercent = index * segmentPortion;
       const localProgress = (scrollPercent - segmentStartPercent) / segmentPortion;
       const clampedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
@@ -49,7 +50,12 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
       const video = videoRefs.current[activeSegment.id];
       if (video && video.duration && !isNaN(video.duration)) {
         // Tie the video time exactly to the scroll progress within this segment
-        video.currentTime = video.duration * clampedLocalProgress;
+        // Using requestAnimationFrame for smoother scrubbing performance
+        requestAnimationFrame(() => {
+          if (video) {
+            video.currentTime = video.duration * clampedLocalProgress;
+          }
+        });
       }
     }
   }, [segments]);
@@ -59,12 +65,18 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
     // Initial call to set state
     handleScroll();
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Safety timeout to show content even if metadata takes too long
+    const timer = setTimeout(() => setIsReady(true), 1500);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+    };
   }, [handleScroll]);
 
-  // Pre-load video duration metadata
-  const handleMetadataLoaded = (id: string) => {
-    handleScroll(); // Recalculate once metadata is available
+  const handleMetadataLoaded = () => {
+    setIsReady(true);
+    handleScroll();
   };
 
   if (!segments || segments.length === 0) {
@@ -86,8 +98,8 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
           <div
             key={segment.id || `segment-${idx}`}
             className={cn(
-              "absolute inset-0 transition-opacity duration-500 ease-in-out",
-              idx === currentIndex ? "opacity-100" : "opacity-0"
+              "absolute inset-0 transition-opacity duration-700 ease-in-out",
+              idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
             )}
           >
             {segment.videoUrl ? (
@@ -97,7 +109,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
                 muted
                 playsInline
                 preload="auto"
-                onLoadedMetadata={() => handleMetadataLoaded(segment.id)}
+                onLoadedMetadata={handleMetadataLoaded}
                 className="w-full h-full object-cover brightness-[0.7]"
               />
             ) : segment.imageUrl ? (
@@ -120,6 +132,13 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/40" />
       </div>
 
+      {!isReady && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Preparing Narrative...</p>
+        </div>
+      )}
+
       <ProgressBar 
         progress={progress} 
         segmentsCount={segments.length} 
@@ -131,13 +150,13 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
         {segments.map((segment, idx) => (
           <section
             key={`section-${segment.id || idx}`}
-            className="h-[120vh] flex items-center justify-center px-6 md:px-24 lg:px-48"
+            className="h-[150vh] flex items-center justify-center px-6 md:px-24 lg:px-48"
           >
             <div className={cn(
               "max-w-3xl text-center narrative-overlay",
               idx === currentIndex ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
             )}>
-              <h2 className="text-5xl md:text-8xl font-headline font-bold mb-8 text-primary drop-shadow-lg">
+              <h2 className="text-5xl md:text-8xl font-headline font-bold mb-8 text-primary drop-shadow-lg transition-all duration-700">
                 {segment.title}
               </h2>
               <div className="bg-background/20 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
@@ -148,7 +167,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
             </div>
           </section>
         ))}
-        {/* Extra spacer to ensure the last segment can be scrolled through */}
+        {/* Extra spacer to ensure the last segment can be fully explored */}
         <div className="h-[20vh]" />
       </div>
 

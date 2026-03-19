@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateStorySegmentDescription } from '@/ai/flows/generate-story-segment-description';
-import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save, FileVideo } from 'lucide-react';
+import { Sparkles, Trash2, Plus, ArrowLeft, Video, Image as LucideImage, Info, Loader2, Save, FileVideo, HardDrive } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -88,17 +88,18 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
         <Alert className="bg-primary/5 border-primary/20">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Interactive Scroll Sync</AlertTitle>
+          <HardDrive className="h-4 w-4" />
+          <AlertTitle>Using Local Files</AlertTitle>
           <AlertDescription className="text-xs">
-            Use a <strong>direct MP4 link</strong> to enable the stop-motion effect. YouTube links will not work for scroll synchronization.
+            1. Put your MP4 files in the <strong>public/</strong> folder of this project.<br/>
+            2. In the "Video URL" field below, type <strong>/your-filename.mp4</strong>
           </AlertDescription>
         </Alert>
         <Alert className="bg-secondary/5 border-secondary/20">
           <FileVideo className="h-4 w-4" />
-          <AlertTitle>Using Local Videos</AlertTitle>
+          <AlertTitle>Pro-Tip: Smooth Scrolling</AlertTitle>
           <AlertDescription className="text-xs">
-            Place your videos in the <code>public/</code> folder of your code. Then use the path <code>/video1.mp4</code> in the Video URL field below.
+            When exporting your video from PNGs, set <strong>Keyframe Distance to 1</strong>. This makes the scrolly-telling perfectly smooth!
           </AlertDescription>
         </Alert>
       </div>
@@ -170,12 +171,10 @@ export function StoryEditor({ initialSegments, onSave }: StoryEditorProps) {
                 
                 <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border-2 border-muted-foreground/10 group">
                    {segment.videoUrl ? (
-                     <video 
-                       key={segment.videoUrl}
-                       src={segment.videoUrl} 
-                       className="object-cover w-full h-full"
-                       muted
-                     />
+                     <div className="w-full h-full bg-black flex items-center justify-center">
+                        <Video className="w-12 h-12 text-white/20" />
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/40 font-bold uppercase tracking-widest">Video Linked</span>
+                     </div>
                    ) : (
                      <img 
                        src={segment.imageUrl} 
