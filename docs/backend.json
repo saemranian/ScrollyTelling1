@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "StorySegment": {
+      "title": "StorySegment",
+      "description": "A single chapter or segment of the interactive narrative.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "title", "description", "imageUrl", "order"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/story_segments/{segmentId}": {
+      "schema": "StorySegment",
+      "description": "Collection of story segments ordered for the narrative."
+    }
+  }
+}
