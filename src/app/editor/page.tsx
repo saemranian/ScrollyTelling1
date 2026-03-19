@@ -1,9 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { StoryEditor } from '@/components/story/StoryEditor';
 import { StorySegment } from '@/components/story/StoryTypes';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { getStorySegments, saveStorySegments } from '@/services/story-service';
@@ -17,7 +17,7 @@ const initialDefaultSegments: StorySegment[] = [
     id: '1',
     title: 'A New Beginning',
     description: 'The journey began in a small wooden workshop, where every tool held a story and every shaving of wood carried the scent of possibility.',
-    imageUrl: PlaceHolderImages.find(p => p.id === 'scene-1')?.imageUrl || 'https://picsum.photos/seed/story1/1200/800',
+    imageUrl: 'https://picsum.photos/seed/story1/1200/800',
     order: 0,
   }
 ];
@@ -30,7 +30,6 @@ export default function EditorPage() {
   const [segments, setSegments] = useState<StorySegment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Ensure user is signed in anonymously to allow Firestore writes
   useEffect(() => {
     if (auth && !user && !isUserLoading) {
       signInAnonymously(auth).catch(err => console.error("Anonymous auth failed", err));

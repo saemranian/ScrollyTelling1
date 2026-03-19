@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +16,7 @@ const defaultSegments: StorySegment[] = [
     id: '1',
     title: 'A New Beginning',
     description: 'The journey began in a small wooden workshop, where every tool held a story and every shaving of wood carried the scent of possibility.',
-    imageUrl: PlaceHolderImages.find(p => p.id === 'scene-1')?.imageUrl || '',
+    imageUrl: 'https://picsum.photos/seed/story1/1200/800',
     order: 0,
   }
 ];

@@ -37,13 +37,11 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
       setCurrentIndex(index);
 
       // Stop-motion scrubbing logic
-      // Calculate how far we are into the CURRENT segment (0 to 1)
       const segmentPortion = 1 / segments.length;
       const segmentStartPercent = index * segmentPortion;
       const localProgress = (scrollPercent - segmentStartPercent) / segmentPortion;
       const clampedLocalProgress = Math.min(Math.max(localProgress, 0), 1);
 
-      // Scrub the video for the active segment
       const activeSegment = segments[index];
       const video = videoRefs.current[activeSegment.id];
       if (video && video.duration && !isNaN(video.duration)) {
@@ -52,7 +50,6 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial call to set state
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
@@ -87,7 +84,7 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
                 preload="auto"
                 className="w-full h-full object-cover brightness-[0.7] contrast-[0.9]"
               />
-            ) : (
+            ) : segment.imageUrl ? (
               <Image
                 src={segment.imageUrl}
                 alt={segment.title}
@@ -95,6 +92,8 @@ export function NarrativeViewer({ segments }: NarrativeViewerProps) {
                 className="object-cover brightness-[0.85] contrast-[0.9]"
                 priority={idx === 0}
               />
+            ) : (
+              <div className="w-full h-full bg-muted" />
             )}
           </div>
         ))}
